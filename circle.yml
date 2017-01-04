@@ -1,0 +1,11 @@
+machine:
+  services:
+    - redis
+  node:
+    version: 4.2.2
+
+test:
+  override:
+    - mocha test --reporter mocha-junit-reporter --grep NO_CI --invert --timeout 60000:
+        environment:
+          MOCHA_FILE: $CIRCLE_TEST_REPORTS/junit/test-results.xml
