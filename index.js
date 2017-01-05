@@ -22,18 +22,21 @@ Cache.prototype.get = function (type, key, cb) {
       var returnObject;
       try {
         returnObject = JSON.parse(str);
-        return cb(null, returnObject);
+        if (!returnObject.expiryTime || returnObject.expiryTime > Date.now()) return cb(null, returnObject.result);
       } catch (e) {
         // Do nothing. We will try our very best to succeed.
       }
     }
     // If we made it here, we need to try to retrieve it from the source.
-    self._getters[type](key, function (err, result) {
+    self._getters[type](key, function (err, result, expiryTime) {
       // If we don't have it in the cache, *and* we can't get it with the getter, we're pretty boned.
       if (err) return cb(err);
       var jsonResult;
       try {
-        jsonResult = JSON.stringify(result);
+        jsonResult = JSON.stringify({
+          result: result,
+          expiryTime: expiryTime || 0
+        });
       } catch (e) {
         return cb('Magnemite does not support the caching of objects that are not JSON serializible');
       }

@@ -82,4 +82,34 @@ describe('Simple Tests', function () {
       });
     });
   });
+
+  it('Cache timed expiry works', function (done) {
+    var numCalls = 0;
+    cache.register('user', function (dbname, cb) {
+      numCalls++;
+      setImmediate(function () {
+        cb(null, {
+          userId: dbname,
+          name: 'Jake'
+        }, Date.now() + 50); //Expire the cache in 50 ms
+      });
+    });
+    cache.get('user', '12345', function (err, user) {
+      assert.equal(err, null);
+      assert.equal(user.userId, '12345');
+      cache.get('user', '12345', function (err, user) {
+        assert.equal(err, null);
+        assert.equal(user.userId, '12345');
+        assert.equal(numCalls, 1);
+        setTimeout(function () {
+          cache.get('user', '12345', function (err, user) {
+            assert.equal(err, null);
+            assert.equal(user.userId, '12345');
+            assert.equal(numCalls, 2);
+            done();
+          });
+        }, 50);
+      });
+    });
+  });
 });
